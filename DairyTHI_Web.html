@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dairy Ventilation">
+<title>Dairy Ventilation Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F5F5F0; color: #1A1A18; padding-bottom: 80px; }
+  .header { background: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #E0DED6; position: sticky; top: 0; z-index: 10; }
+  .header-icon { width: 40px; height: 40px; border-radius: 10px; background: #E1F5EE; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .header-title { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: #6B6B65; margin-top: 2px; }
+  .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+  .card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 1px solid #E0DED6; }
+  .card-title { font-size: 14px; font-weight: 500; margin-bottom: 14px; }
+  .input-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .input-group { flex: 1; min-width: 140px; }
+  .label { font-size: 12px; color: #6B6B65; margin-bottom: 6px; display: block; }
+  input[type="number"], input[type="text"] { width: 100%; padding: 10px; border: 1px solid #C8C6BE; border-radius: 8px; font-size: 16px; font-weight: 500; text-align: center; background: #FAFAF8; }
+  button { background: #1D9E75; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 10px; }
+  button:hover { background: #178A66; }
+  button.toggle { flex: 1; background: #FAFAF8; color: #6B6B65; border: 1px solid #C8C6BE; }
+  button.toggle.active { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+  .toggle-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .loc-btn { background: #E1F5EE; color: #0F6E56; border: 1px solid #9FE1CB; }
+  .result-card { border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 2px solid; }
+  .result-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F0EEE8; }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { font-size: 13px; color: #6B6B65; flex: 1; padding-right: 8px; }
+  .result-value { font-size: 17px; font-weight: 600; color: #1565C0; text-align: right; }
+  .result-unit { font-size: 11px; color: #888; }
+  .thi-num { font-size: 52px; font-weight: 700; line-height: 1; }
+  .thi-label { font-size: 12px; color: #6B6B65; }
+  .zone-badge { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #fff; display: inline-block; }
+  .formula-card { background: #F0EEE8; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  .formula-text { font-size: 13px; font-family: 'Courier New', monospace; margin-bottom: 4px; }
+  .formula-sub { font-size: 12px; color: #6B6B65; }
+  .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; border-top: 1px solid #E0DED6; padding: 8px 0 12px 0; z-index: 100; }
+  .tab-item { flex: 1; text-align: center; padding: 4px; cursor: pointer; position: relative; }
+  .tab-icon { font-size: 22px; }
+  .tab-label { font-size: 10px; color: #A0A09A; margin-top: 2px; }
+  .tab-item.active .tab-label { color: #1D9E75; font-weight: 600; }
+  .tab-item.active::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background: #1D9E75; border-radius: 2px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .gauge-track { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 6px; position: relative; }
+  .gauge-seg { height: 10px; }
+  .gauge-needle { position: absolute; top: -3px; width: 3px; height: 16px; background: #1A1A18; border-radius: 2px; margin-left: -1.5px; }
+  .gauge-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: #6B6B65; }
+  .step-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .step-dot { width: 7px; height: 7px; border-radius: 4px; margin-top: 6px; flex-shrink: 0; }
+  .step-text { font-size: 14px; color: #3A3A36; line-height: 21px; }
+  .ref-row { padding: 10px 0; border-bottom: 1px solid #F0EEE8; }
+  .ref-text { font-size: 12px; color: #3A3A36; line-height: 18px; margin-bottom: 3px; }
+  .ref-url { font-size: 11px; color: #1D9E75; word-break: break-all; }
+  .ref-url a { color: #1D9E75; text-decoration: none; }
+  .feature-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F0EEE8; align-items: flex-start; }
+  .feature-icon { font-size: 20px; }
+  canvas { width: 100%; max-width: 100%; height: auto; }
+  .table { width: 100%; border-collapse: collapse; }
+  .table th { padding: 8px; border-bottom: 1px solid #E0DED6; font-size: 12px; }
+  .table td { padding: 6px; border-bottom: 1px solid #F0EEE8; font-size: 12px; text-align: center; color: #3A3A36; }
+  .or-row { display: flex; align-items: center; gap: 8px; margin: 14px 0; }
+  .or-line { flex: 1; height: 1px; background: #E0DED6; }
+  .or-text { font-size: 12px; color: #A0A09A; }
+  .pb-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .pb-label { flex: 1.4; font-size: 11px; color: #6B6B65; }
+  .pb-input { flex: 1; }
+  .legend-row { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; justify-content: center; font-size: 11px; color: #6B6B65; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-line { width: 24px; height: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🐄</div>
+  <div>
+    <div class="header-title">Dairy Ventilation Calculator</div>
+    <div class="header-sub" id="subtitle">Temperature-Humidity Index</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ─── THI SCREEN ────────────────────────────────────────────────── -->
+<div id="thi" class="screen active">
+  <div class="card">
+    <div class="card-title">Enter current conditions</div>
+    <button class="loc-btn" onclick="fetchWeather()">📍 Use my location</button>
+    <div id="loc-status" style="font-size:12px; color:#0F6E56; text-align:center; margin-top:6px;"></div>
+    <div class="or-row"><div class="or-line"></div><div class="or-text">or enter manually</div><div class="or-line"></div></div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="label">Temperature (°F)</label>
+        <input type="number" id="temp" placeholder="e.g. 85">
+      </div>
+      <div class="input-group">
+        <label class="label">Humidity (%)</label>
+        <input type="number" id="rh" placeholder="e.g. 60">
+      </div>
+    </div>
+    <button onclick="calcTHI()">Calculate THI</button>
+  </div>
+
+  <div id="thi-result"></div>
+
+  <div class="formula-card">
+    <div class="formula-text">NOAA Heat Index (Steadman / Rothfusz)</div>
+    <div class="formula-text">Milk loss estimates from UMN Extension</div>
+  </div>
+</div>
+
+<!-- ─── ADOPTING SCREEN ──────────────────────────────────────────── -->
+<div id="adopt" class="screen">
+  <div class="card">
+    <div class="card-title">Barn location (Wisconsin)</div>
+    <div class="toggle-row">
+      <button class="toggle active" id="adopt-south" onclick="setAdoptRegion(true)">South WI</button>
+      <button class="toggle" id="adopt-north" onclick="setAdoptRegion(false)">Central / North WI</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Barn dimensions</div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Barn width (ft)</label><input type="number" id="ad-w" value="124"></div>
+      <div class="input-group"><label class="label">Barn length (ft)</label><input type="number" id="ad-l" value="359"></div>
+    </div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Ridge height (ft)</label><input type="number" id="ad-rh" value="14"></div>
+      <div class="input-group"><label class="label">Sidewall height (ft)</label><input type="number" id="ad-sw" value="9"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Herd & ventilation</div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Number of cows</label><input type="number" id="ad-cows" value="300"></div>
+      <div class="input-group"><label class="label">Air exchange (ACH)</label><input type="number" id="ad-ach" value="60"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fan specifications</div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Fan capacity (cfm)</label><input type="number" id="ad-cap" value="28500"></div>
+      <div class="input-group"><label class="label">Fan price ($/fan)</label><input type="number" id="ad-price" value="500"></div>
+    </div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Fan efficiency (cfm/Watt)</label><input type="number" id="ad-eff" value="16.0" step="0.1"></div>
+      <div class="input-group"></div>
+    </div>
+    <button onclick="calcAdopt()">Calculate</button>
+  </div>
+
+  <div id="adopt-result"></div>
+</div>
+
+<!-- ─── EVALUATING SCREEN ───────────────────────────────────────── -->
+<div id="eval" class="screen">
+  <div class="card">
+    <div class="card-title">Barn location (Wisconsin)</div>
+    <div class="toggle-row">
+      <button class="toggle active" id="ev-south" onclick="setEvalRegion(true)">South WI</button>
+      <button class="toggle" id="ev-north" onclick="setEvalRegion(false)">Central / North WI</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Barn dimensions</div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Barn width (ft)</label><input type="number" id="ev-w" value="124"></div>
+      <div class="input-group"><label class="label">Barn length (ft)</label><input type="number" id="ev-l" value="359"></div>
+    </div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Ridge height (ft)</label><input type="number" id="ev-rh" value="14"></div>
+      <div class="input-group"><label class="label">Sidewall height (ft)</label><input type="number" id="ev-sw" value="9"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Herd & fans</div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Number of cows</label><input type="number" id="ev-cows" value="300"></div>
+      <div class="input-group"><label class="label">Number of fans</label><input type="number" id="ev-fans" value="17"></div>
+    </div>
+    <div class="input-row">
+      <div class="input-group"><label class="label">Fan capacity (cfm/fan)</label><input type="number" id="ev-cap" value="28500"></div>
+      <div class="input-group"><label class="label">Fan efficiency (cfm/W)</label><input type="number" id="ev-eff" value="16.0" step="0.1"></div>
+    </div>
+    <button onclick="calcEval()">Calculate</button>
+  </div>
+
+  <div id="eval-result"></div>
+</div>
+
+<!-- ─── FAN EFFICIENCY SCREEN ────────────────────────────────────── -->
+<div id="fan" class="screen">
+  <div class="card">
+    <div class="card-title">Select fan size</div>
+    <div class="toggle-row">
+      <button class="toggle" id="fan-24" onclick="setFanSize('24')">24"</button>
+      <button class="toggle" id="fan-36" onclick="setFanSize('36')">36"</button>
+      <button class="toggle" id="fan-48" onclick="setFanSize('48')">48"</button>
+      <button class="toggle active" id="fan-60" onclick="setFanSize('60')">60"</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="fan-chart-title">60" Fans — VER vs Static Pressure</div>
+    <canvas id="fan-chart" width="400" height="280"></canvas>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-line" style="border-top: 2px dashed #E57373;"></div>High</div>
+      <div class="legend-item"><div class="legend-line" style="background:#2E7D32;"></div>Average</div>
+      <div class="legend-item"><div class="legend-line" style="border-top: 2px dotted #E57373;"></div>Low</div>
+      <div class="legend-item"><span style="color:#1A1A18;">★</span>Your fan</div>
+    </div>
+    <div class="formula-sub" style="text-align:center; margin-top:8px;">Stars show your fan vs BESS Lab tested fans</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Enter your fan performance</div>
+    <div class="formula-sub" style="margin-bottom:10px;">Efficiency (cfm/W) at each static pressure</div>
+    <div id="fan-inputs"></div>
+  </div>
+</div>
+
+<!-- ─── PAYBACK SCREEN ──────────────────────────────────────────── -->
+<div id="payback" class="screen">
+  <div class="card">
+    <div class="card-title">Fan specifications</div>
+    <div class="pb-row">
+      <div class="pb-label"></div>
+      <div class="pb-input" style="text-align:center; font-weight:600; color:#5C6BC0;">Fan 1</div>
+      <div class="pb-input" style="text-align:center; font-weight:600; color:#EF6C00;">Fan 2</div>
+    </div>
+    <div id="pb-inputs"></div>
+    <button onclick="calcPayback()">Calculate payback</button>
+  </div>
+  <div id="pb-result"></div>
+  <div class="formula-card">
+    <div class="formula-sub"><strong>Assumptions:</strong></div>
+    <div class="formula-text">Operation: 24 hr/day · Cool season: 6 months · Warm season: 6 months</div>
+    <div class="formula-text">Electricity rate: 0.1285 $/kWh</div>
+  </div>
+</div>
+
+<!-- ─── ABOUT SCREEN ────────────────────────────────────────────── -->
+<div id="about" class="screen">
+  <div class="card" style="text-align:center; padding: 32px 16px;">
+    <div style="width:72px; height:72px; border-radius:18px; background:#E1F5EE; display:inline-flex; align-items:center; justify-content:center; font-size:36px; margin-bottom:16px;">🐄</div>
+    <div style="font-size:20px; font-weight:700;">Dairy Ventilation Calculator</div>
+    <div style="font-size:13px; color:#6B6B65; margin-top:6px;">Dairy Mechanical Ventilation Tools</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">About this app</div>
+    <div style="font-size:14px; line-height:22px;">
+      This app was developed by <strong>Nilroth Ly</strong> and <strong>Nesli Akdeniz</strong> in Biological Systems Engineering at the <strong>University of Wisconsin-Madison</strong>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Contact</div>
+    <div style="font-size:13px; color:#6B6B65; margin-bottom:8px;">If you have any questions or comments:</div>
+    <div class="step-row"><span style="font-size:18px;">✉️</span><a href="mailto:nesli@wisc.edu" style="color:#1D9E75; text-decoration:none; font-weight:500;">nesli@wisc.edu</a></div>
+    <div class="step-row"><span style="font-size:18px;">📞</span><span style="color:#1D9E75; font-weight:500;">(608) 262-0613</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">References</div>
+    <div class="ref-row">
+      <div class="ref-text">Akdeniz, N., Bjurstrom, A., Schlesser, H. (2025). Adopting and Evaluating Mechanical Ventilation in Dairy Barns: A Calculator Guide. UW-Madison Dairy Extension.</div>
+      <div class="ref-url"><a href="https://dairy.extension.wisc.edu/articles/adopting-and-evaluating-mechanical-ventilation-in-dairy-barns-a-calculator-guide/" target="_blank">dairy.extension.wisc.edu/articles/...</a></div>
+      <div style="font-size:10px; color:#A0A09A; margin-top:2px;">Accessed 5-5-2026</div>
+    </div>
+    <div class="ref-row">
+      <div class="ref-text">Armstrong, J., Janni, K. (2023). Heat Stress in Dairy Cattle. University of Minnesota Extension.</div>
+      <div class="ref-url"><a href="https://extension.umn.edu/dairy-milking-cows/heat-stress-dairy-cattle" target="_blank">extension.umn.edu/dairy-milking-cows/heat-stress-dairy-cattle</a></div>
+      <div style="font-size:10px; color:#A0A09A; margin-top:2px;">Accessed 5-5-2026</div>
+    </div>
+    <div class="ref-row">
+      <div class="ref-text">Ly, N., Akdeniz, N. (2026). Practical Guidelines to Improve the Sustainability of Ventilation Fan Use in Agricultural Operations. Sustainability, 18(5), 2453.</div>
+      <div class="ref-url"><a href="https://doi.org/10.3390/su18052453" target="_blank">doi.org/10.3390/su18052453</a></div>
+    </div>
+    <div class="ref-row">
+      <div class="ref-text">NOAA. The Heat Index Equation (2022).</div>
+      <div class="ref-url"><a href="https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml" target="_blank">wpc.ncep.noaa.gov/html/heatindex_equation.shtml</a></div>
+      <div style="font-size:10px; color:#A0A09A; margin-top:2px;">Accessed 5-5-2026</div>
+    </div>
+  </div>
+
+  <div class="formula-card" style="text-align:center;">
+    <div class="formula-sub">Biological Systems Engineering · UW-Madison</div>
+    <div class="formula-sub" style="margin-top:4px;">460 Henry Mall, Madison, WI 53706</div>
+  </div>
+</div>
+
+</div>
+
+<!-- ─── BOTTOM TAB BAR ─────────────────────────────────────── -->
+<div class="tab-bar">
+  <div class="tab-item active" onclick="showTab('thi')"><div class="tab-icon">🌡</div><div class="tab-label">THI</div></div>
+  <div class="tab-item" onclick="showTab('adopt')"><div class="tab-icon">🌀</div><div class="tab-label">Adopting</div></div>
+  <div class="tab-item" onclick="showTab('eval')"><div class="tab-icon">📊</div><div class="tab-label">Evaluating</div></div>
+  <div class="tab-item" onclick="showTab('fan')"><div class="tab-icon">📈</div><div class="tab-label">Fan Eff.</div></div>
+  <div class="tab-item" onclick="showTab('payback')"><div class="tab-icon">💰</div><div class="tab-label">Payback</div></div>
+  <div class="tab-item" onclick="showTab('about')"><div class="tab-icon">ℹ️</div><div class="tab-label">About</div></div>
+</div>
+
+<script>
+// Format number with commas
+function fmt(n) {
+  return String(Math.round(Number(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Tab switching
+const SUBS = { thi:'Temperature-Humidity Index', adopt:'Adopting Fans', eval:'Evaluating Ventilation', fan:'Fan Efficiency Comparison', payback:'Payback Period', about:'About this app' };
+function showTab(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.getElementById('subtitle').textContent = SUBS[id];
+  if (id === 'fan') drawFanChart();
+}
+
+// ─── THI ──────────────────────────────────────────────────
+function getZone(thi) {
+  if (thi < 68) return { label:'No stress', color:'#0F6E56', bg:'#E1F5EE', border:'#5DCAA5', impact:'None', action:'Normal operations. Cows are comfortable.', detail:['Maintain regular ventilation rates','Monitor THI if temperatures are rising'] };
+  if (thi < 72) return { label:'Mild stress', color:'#3B6D11', bg:'#EAF3DE', border:'#97C459', impact:'~2.5 lbs per head per day milk loss', action:'Run fans at full speed.', detail:['Turn on all fans','Make sure fresh water is always available','Check again in 1-2 hours if temp rising'] };
+  if (thi < 80) return { label:'Moderate stress', color:'#633806', bg:'#FAEEDA', border:'#EF9F27', impact:'~6 lbs per head per day milk loss', action:'Activate all fans AND soakers if available.', detail:['Run ventilation at maximum','Check fresh water availability frequently'] };
+  return { label:'Severe stress', color:'#791F1F', bg:'#FCEBEB', border:'#E24B4A', impact:'~9-10 lbs per head per day milk loss', action:'Immediate action required.', detail:['Full ventilation - all fans on','If available soakers are on','Reduce stocking density if possible','Move vulnerable cows (fresh, late lactation)','Contact your vet if cows show distress'] };
+}
+
+function thiFormula(t, h) {
+  let HI = 0.5 * (t + 61.0 + ((t - 68.0) * 1.2) + (h * 0.094));
+  if (HI >= 80) {
+    HI = -42.379 + 2.04901523*t + 10.14333127*h - 0.22475541*t*h - 0.00683783*t*t - 0.05481717*h*h + 0.00122874*t*t*h + 0.00085282*t*h*h - 0.00000199*t*t*h*h;
+    if (h < 13 && t >= 80 && t <= 112) HI -= ((13-h)/4)*Math.sqrt((17-Math.abs(t-95))/17);
+    if (h > 85 && t >= 80 && t <= 87) HI += ((h-85)/10)*((87-t)/5);
+  }
+  return Math.round(HI);
+}
+
+function calcTHI() {
+  const t = parseFloat(document.getElementById('temp').value);
+  const h = parseFloat(document.getElementById('rh').value);
+  if (isNaN(t) || isNaN(h)) return;
+  const thi = thiFormula(t, h);
+  const z = getZone(thi);
+  const pct = Math.min(100, Math.max(0, ((thi - 50) / 50) * 100));
+  document.getElementById('thi-result').innerHTML = `
+    <div class="result-card" style="background:${z.bg}; border-color:${z.border};">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="thi-label">THI Value</div>
+          <div class="thi-num" style="color:${z.color};">${thi}</div>
+        </div>
+        <div class="zone-badge" style="background:${z.color};">${z.label}</div>
+      </div>
+      <div style="height:1px; background:rgba(0,0,0,0.1); margin:14px 0;"></div>
+      <div class="gauge-track">
+        <div class="gauge-seg" style="flex:18; background:#E1F5EE;"></div>
+        <div class="gauge-seg" style="flex:4; background:#C0DD97;"></div>
+        <div class="gauge-seg" style="flex:8; background:#FAC775;"></div>
+        <div class="gauge-seg" style="flex:20; background:#F09595;"></div>
+        <div class="gauge-needle" style="left:${pct}%;"></div>
+      </div>
+      <div class="gauge-labels"><span>No stress</span><span>Mild</span><span>Moderate</span><span>Severe</span></div>
+      <div style="height:1px; background:rgba(0,0,0,0.1); margin:14px 0;"></div>
+      <div style="font-size:11px; color:#6B6B65;">Milk production impact</div>
+      <div style="font-size:16px; font-weight:600; color:${z.color}; margin-bottom:10px;">${z.impact}</div>
+      <div style="border-left:3px solid ${z.color}; padding-left:10px;"><div style="font-size:14px; font-weight:500; color:${z.color};">${z.action}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recommended actions</div>
+      ${z.detail.map(s => `<div class="step-row"><div class="step-dot" style="background:${z.color};"></div><div class="step-text">${s}</div></div>`).join('')}
+    </div>
+  `;
+}
+
+async function fetchWeather() {
+  document.getElementById('loc-status').textContent = 'Getting location...';
+  if (!navigator.geolocation) {
+    document.getElementById('loc-status').textContent = 'Geolocation not supported';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude, longitude } = pos.coords;
+    try {
+      const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m&temperature_unit=fahrenheit&timezone=auto`);
+      const d = await r.json();
+      document.getElementById('temp').value = Math.round(d.current.temperature_2m);
+      document.getElementById('rh').value = Math.round(d.current.relative_humidity_2m);
+      document.getElementById('loc-status').textContent = `📌 ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+    } catch (e) {
+      document.getElementById('loc-status').textContent = 'Could not fetch weather';
+    }
+  }, () => {
+    document.getElementById('loc-status').textContent = 'Location permission denied';
+  });
+}
+
+// ─── ADOPTING ──────────────────────────────────────────────
+let adoptSouth = true;
+function setAdoptRegion(s) {
+  adoptSouth = s;
+  document.getElementById('adopt-south').classList.toggle('active', s);
+  document.getElementById('adopt-north').classList.toggle('active', !s);
+}
+
+function calcAdopt() {
+  const W = parseFloat(document.getElementById('ad-w').value);
+  const L = parseFloat(document.getElementById('ad-l').value);
+  const RH = parseFloat(document.getElementById('ad-rh').value);
+  const SW = parseFloat(document.getElementById('ad-sw').value);
+  const NC = parseFloat(document.getElementById('ad-cows').value);
+  const ACH = parseFloat(document.getElementById('ad-ach').value);
+  const FC = parseFloat(document.getElementById('ad-cap').value);
+  const FP = parseFloat(document.getElementById('ad-price').value);
+  const FE = parseFloat(document.getElementById('ad-eff').value);
+  if ([W,L,RH,SW,NC,ACH,FC,FP,FE].some(isNaN)) return;
+  const vol = L*W*SW + (RH-SW)*L*W/2;
+  const cfm = ACH * vol / 60;
+  const nFans = Math.ceil(cfm / FC);
+  const cost = nFans * FP;
+  const inlet = cfm / 500;
+  const monthly = (cfm / FE) * (24 * 30 / 1000);
+  const K = vol * 24 / (FE * 60 * 1000);
+  const south = K * (4*131 + 13.33*29.8 + 22.66*29.8 + 32*29.8 + 41.33*29.8 + 50.66*29.8 + 60*85);
+  const north = K * (4*150 + 13.33*28.8 + 22.66*28.8 + 32*28.8 + 41.33*28.8 + 50.66*28.8 + 60*71);
+  document.getElementById('adopt-result').innerHTML = `
+    <div class="card">
+      <div class="card-title">Ventilation results</div>
+      <div class="result-row"><div class="result-label">Total fan capacity required</div><div><div class="result-value">${fmt(cfm)}</div><div class="result-unit">cfm</div></div></div>
+      <div class="result-row"><div class="result-label">Number of fans required</div><div><div class="result-value">${nFans} fans</div></div></div>
+      <div class="result-row"><div class="result-label">Total fan cost</div><div><div class="result-value">$${fmt(cost)}</div></div></div>
+      <div class="result-row"><div class="result-label">Required inlet size</div><div><div class="result-value">${fmt(inlet)}</div><div class="result-unit">ft²</div></div></div>
+      <div class="result-row"><div class="result-label">Monthly energy (24h)</div><div><div class="result-value">${fmt(monthly)}</div><div class="result-unit">kWh/month</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Annual energy</div>
+      <div class="result-row"><div class="result-label">Facility annual energy (South WI)</div><div><div class="result-value">${fmt(south)}</div><div class="result-unit">kWh/yr</div></div></div>
+      <div class="result-row"><div class="result-label">Per animal (South WI)</div><div><div class="result-value">${(south/NC).toFixed(1)}</div><div class="result-unit">kWh/head</div></div></div>
+      <div class="result-row"><div class="result-label">Facility annual energy (Central-North WI)</div><div><div class="result-value">${fmt(north)}</div><div class="result-unit">kWh/yr</div></div></div>
+      <div class="result-row"><div class="result-label">Per animal (Central-North WI)</div><div><div class="result-value">${(north/NC).toFixed(1)}</div><div class="result-unit">kWh/head</div></div></div>
+    </div>
+  `;
+}
+
+// ─── EVALUATING ────────────────────────────────────────────
+let evalSouth = true;
+function setEvalRegion(s) {
+  evalSouth = s;
+  document.getElementById('ev-south').classList.toggle('active', s);
+  document.getElementById('ev-north').classList.toggle('active', !s);
+}
+
+function calcEval() {
+  const W = parseFloat(document.getElementById('ev-w').value);
+  const L = parseFloat(document.getElementById('ev-l').value);
+  const RH = parseFloat(document.getElementById('ev-rh').value);
+  const SW = parseFloat(document.getElementById('ev-sw').value);
+  const NC = parseFloat(document.getElementById('ev-cows').value);
+  const NF = parseFloat(document.getElementById('ev-fans').value);
+  const FC = parseFloat(document.getElementById('ev-cap').value);
+  const FE = parseFloat(document.getElementById('ev-eff').value);
+  if ([W,L,RH,SW,NC,NF,FC,FE].some(isNaN)) return;
+  const vol = L*W*SW + (RH-SW)*L*W/2;
+  const maxACH = FC * NF * 60 / vol;
+  const inlet = NF * FC / 500;
+  const monthly = (NF * FC / FE) * (24 * 30 / 1000);
+  const K = vol * 24 / (FE * 60 * 1000);
+  const south = K * (4*131 + 13.33*29.8 + 22.66*29.8 + 32*29.8 + 41.33*29.8 + 50.66*29.8 + 60*85);
+  const north = K * (4*150 + 13.33*28.8 + 22.66*28.8 + 32*28.8 + 41.33*28.8 + 50.66*28.8 + 60*71);
+  document.getElementById('eval-result').innerHTML = `
+    <div class="card">
+      <div class="card-title">Ventilation results</div>
+      <div class="result-row"><div class="result-label">Max air exchange rate</div><div><div class="result-value">${maxACH.toFixed(1)}</div><div class="result-unit">ACH</div></div></div>
+      <div class="result-row"><div class="result-label">Required inlet size</div><div><div class="result-value">${fmt(inlet)}</div><div class="result-unit">ft²</div></div></div>
+      <div class="result-row"><div class="result-label">Monthly energy (24h)</div><div><div class="result-value">${fmt(monthly)}</div><div class="result-unit">kWh/month</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Annual energy</div>
+      <div class="result-row"><div class="result-label">Facility annual energy (South WI)</div><div><div class="result-value">${fmt(south)}</div><div class="result-unit">kWh/yr</div></div></div>
+      <div class="result-row"><div class="result-label">Per animal (South WI)</div><div><div class="result-value">${(south/NC).toFixed(1)}</div><div class="result-unit">kWh/head</div></div></div>
+      <div class="result-row"><div class="result-label">Facility annual energy (Central-North WI)</div><div><div class="result-value">${fmt(north)}</div><div class="result-unit">kWh/yr</div></div></div>
+      <div class="result-row"><div class="result-label">Per animal (Central-North WI)</div><div><div class="result-value">${(north/NC).toFixed(1)}</div><div class="result-unit">kWh/head</div></div></div>
+    </div>
+  `;
+}
+
+// ─── FAN EFFICIENCY ────────────────────────────────────────
+const FAN_CURVES = {
+  '24': { high:(x)=>1.50952*x*x-20.705*x+17.3434, average:(x)=>-25.28095*x*x-10.50786*x+12.52095, low:(x)=>1.80952*x*x-3.30143*x+5.76655 },
+  '36': { high:(x)=>66.29048*x*x-78.19643*x+28.8916, average:(x)=>-16.37143*x*x-32.13429*x+18.71021, low:(x)=>-27.85238*x*x-14.03214*x+10.2956 },
+  '48': { high:(x)=>-29.13333*x*x-37.85286*x+25.40748, average:(x)=>-22.25714*x*x-27.53571*x+20.60814, low:(x)=>-25.48571*x*x-11.95714*x+10.51014 },
+  '60': { high:(x)=>8.8381*x*x-60.25286*x+28.40155, average:(x)=>-39.29524*x*x-43.09571*x+24.58788, low:(x)=>-55.18095*x*x-34.35714*x+20.8161 },
+};
+const X_STEPS = [0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30];
+let fanSize = '60';
+const userVals = { '0':'', '0.05':'', '0.1':'', '0.15':'', '0.2':'', '0.25':'', '0.3':'' };
+
+function setFanSize(s) {
+  fanSize = s;
+  ['24','36','48','60'].forEach(sz => document.getElementById('fan-'+sz).classList.toggle('active', sz === s));
+  document.getElementById('fan-chart-title').textContent = `${s}" Fans — VER vs Static Pressure`;
+  drawFanChart();
+}
+
+function buildFanInputs() {
+  const html = X_STEPS.map(x => {
+    const key = x === 0 ? '0' : x.toString();
+    return `<div class="result-row"><div style="font-size:13px;">P = ${x.toFixed(2)} in. H₂O</div><input type="number" step="0.1" placeholder="cfm/W" style="width:100px; padding:6px; text-align:center;" oninput="userVals['${key}']=this.value; drawFanChart();"></div>`;
+  }).join('');
+  document.getElementById('fan-inputs').innerHTML = html;
+}
+
+function drawFanChart() {
+  const canvas = document.getElementById('fan-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.offsetWidth || 400;
+  const H = canvas.height = 280;
+  const padL = 50, padR = 20, padT = 20, padB = 40;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const xMax = 0.30, yMax = 30;
+  const toX = (x) => padL + (x / xMax) * plotW;
+  const toY = (y) => padT + plotH - (Math.max(0, Math.min(yMax, y)) / yMax) * plotH;
+
+  ctx.clearRect(0, 0, W, H);
+  // Grid
+  ctx.strokeStyle = '#E8E8E0'; ctx.lineWidth = 0.5;
+  for (let y = 0; y <= 30; y += 5) { ctx.beginPath(); ctx.moveTo(padL, toY(y)); ctx.lineTo(W-padR, toY(y)); ctx.stroke(); }
+  X_STEPS.forEach(x => { ctx.beginPath(); ctx.moveTo(toX(x), padT); ctx.lineTo(toX(x), H-padB); ctx.stroke(); });
+  // Axes
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W-padR, H-padB); ctx.stroke();
+  // Y labels
+  ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+  for (let y = 0; y <= 30; y += 5) ctx.fillText(y, padL-4, toY(y)+3);
+  // X labels
+  ctx.textAlign = 'center';
+  [0, 0.10, 0.20, 0.30].forEach(x => ctx.fillText(x.toFixed(2), toX(x), H-padB+14));
+  // Axis titles
+  ctx.fillStyle = '#666'; ctx.font = '11px sans-serif';
+  ctx.fillText('Static pressure (in. H₂O)', W/2, H-8);
+  ctx.save(); ctx.translate(12, H/2); ctx.rotate(-Math.PI/2); ctx.fillText('VER (cfm/watt)', 0, 0); ctx.restore();
+
+  // Curves
+  const curves = FAN_CURVES[fanSize];
+  function drawCurve(fn, color, dashed) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.setLineDash(dashed ? [5,3] : []);
+    ctx.beginPath();
+    let first = true;
+    for (let x = 0; x <= 0.30; x += 0.005) {
+      const y = fn(x);
+      if (y >= 0 && y <= 30) {
+        if (first) { ctx.moveTo(toX(x), toY(y)); first = false; }
+        else ctx.lineTo(toX(x), toY(y));
+      }
+    }
+    ctx.stroke();
+  }
+  drawCurve(curves.high, '#E57373', true);
+  drawCurve(curves.average, '#2E7D32', false);
+  drawCurve(curves.low, '#E57373', true);
+  ctx.setLineDash([]);
+
+  // User stars
+  ctx.fillStyle = '#1A1A18'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  X_STEPS.forEach(x => {
+    const key = x === 0 ? '0' : x.toString();
+    const val = parseFloat(userVals[key]);
+    if (!isNaN(val)) ctx.fillText('★', toX(x), toY(val));
+  });
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ─── PAYBACK ───────────────────────────────────────────────
+const pbFields = [
+  ['# Fans', 'fans', '4', '9'],
+  ['Cost ($/fan)', 'cost', '2000', '500'],
+  ['Warm cap (cfm/fan)', 'warmCap', '27600', '11950'],
+  ['Warm eff (cfm/W)', 'warmEff', '22.8', '17.0'],
+  ['Cool cap (cfm/fan)', 'coolCap', '4700', '2060'],
+  ['Cool eff (cfm/W)', 'coolEff', '28.0', '26.5'],
+];
+
+function buildPbInputs() {
+  document.getElementById('pb-inputs').innerHTML = pbFields.map(([label, key, v1, v2]) => `
+    <div class="pb-row">
+      <div class="pb-label">${label}</div>
+      <input class="pb-input" type="number" step="0.1" id="pb1-${key}" value="${v1}">
+      <input class="pb-input" type="number" step="0.1" id="pb2-${key}" value="${v2}">
+    </div>
+  `).join('');
+}
+
+function calcPayback() {
+  const f1 = {}, f2 = {};
+  pbFields.forEach(([_, key]) => {
+    f1[key] = parseFloat(document.getElementById('pb1-'+key).value);
+    f2[key] = parseFloat(document.getElementById('pb2-'+key).value);
+  });
+  if (Object.values(f1).concat(Object.values(f2)).some(isNaN)) return;
+  const factor = 0.1285 * 24 * 182.5 / 1000;
+  const init1 = f1.fans * f1.cost, init2 = f2.fans * f2.cost;
+  const ann1 = f1.fans * (f1.warmCap/f1.warmEff + f1.coolCap/f1.coolEff) * factor;
+  const ann2 = f2.fans * (f2.warmCap/f2.warmEff + f2.coolCap/f2.coolEff) * factor;
+  const cum1 = [], cum2 = [];
+  for (let y = 0; y <= 10; y++) { cum1.push(init1 + ann1*y); cum2.push(init2 + ann2*y); }
+  let crossY = null, crossC = null;
+  for (let i = 1; i <= 10; i++) {
+    if ((cum1[i-1] - cum2[i-1]) * (cum1[i] - cum2[i]) <= 0) {
+      const dDiff = (cum1[i]-cum2[i]) - (cum1[i-1]-cum2[i-1]);
+      const t = dDiff !== 0 ? -(cum1[i-1]-cum2[i-1]) / dDiff : 0;
+      crossY = ((i-1) + t).toFixed(1);
+      crossC = Math.round(cum1[i-1] + (cum1[i]-cum1[i-1])*t);
+      break;
+    }
+  }
+  // Draw chart
+  const yMin = Math.floor(Math.min(...cum1, ...cum2) / 500) * 500;
+  const yMax = Math.ceil(Math.max(...cum1, ...cum2) / 500) * 500;
+  document.getElementById('pb-result').innerHTML = `
+    <div class="card">
+      <div class="card-title">Cumulative cost over 10 years</div>
+      <canvas id="pb-chart" width="400" height="280"></canvas>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-line" style="background:#5C6BC0;"></div>Fan 1</div>
+        <div class="legend-item"><div class="legend-line" style="background:#EF6C00;"></div>Fan 2</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Summary</div>
+      <div class="result-row"><div class="result-label">Fan 1 initial cost</div><div class="result-value">$${fmt(init1)}</div></div>
+      <div class="result-row"><div class="result-label">Fan 1 annual energy cost</div><div class="result-value">$${fmt(ann1)}/yr</div></div>
+      <div class="result-row"><div class="result-label">Fan 2 initial cost</div><div class="result-value">$${fmt(init2)}</div></div>
+      <div class="result-row"><div class="result-label">Fan 2 annual energy cost</div><div class="result-value">$${fmt(ann2)}/yr</div></div>
+      ${crossY ? `<div class="result-row" style="background:#FFF8F8; margin:0 -16px; padding:10px 16px;"><div class="result-label">Payback period</div><div><div class="result-value" style="color:#2E7D32;">${crossY} years</div><div class="result-unit">at $${fmt(crossC)}</div></div></div>` : '<div class="result-row"><div class="result-label">Payback period</div><div class="result-value">No crossover in 10 years</div></div>'}
+    </div>
+  `;
+  // Draw chart
+  setTimeout(() => {
+    const c = document.getElementById('pb-chart');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    const W = c.width = c.offsetWidth || 400, H = 280;
+    c.height = H;
+    const padL = 60, padR = 20, padT = 20, padB = 40;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const toX = (yr) => padL + (yr/10)*plotW;
+    const toY = (v) => padT + plotH - ((v-yMin)/(yMax-yMin))*plotH;
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle='#E8E8E0'; ctx.lineWidth=0.5;
+    for (let i = 0; i <= 5; i++) { const y = padT + (i/5)*plotH; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+    for (let i = 0; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(toX(i),padT); ctx.lineTo(toX(i),H-padB); ctx.stroke(); }
+    ctx.strokeStyle='#888'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,H-padB); ctx.lineTo(W-padR,H-padB); ctx.stroke();
+    ctx.fillStyle='#666'; ctx.font='10px sans-serif'; ctx.textAlign='right';
+    for (let i = 0; i <= 5; i++) {
+      const v = yMin + i*(yMax-yMin)/5; const y = padT + (1-i/5)*plotH;
+      ctx.fillText(v >= 1000 ? (v/1000).toFixed(0)+'k' : v, padL-4, y+3);
+    }
+    ctx.textAlign='center';
+    for (let i = 0; i <= 10; i+=2) ctx.fillText(i, toX(i), H-padB+14);
+    ctx.fillText('Time (years)', W/2, H-8);
+    ctx.save(); ctx.translate(15, H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Cumulative costs ($)', 0, 0); ctx.restore();
+    // Lines
+    function drawLine(data, color) {
+      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath();
+      data.forEach((v,i) => { const x = toX(i), y = toY(v); if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+      ctx.stroke();
+    }
+    drawLine(cum1, '#5C6BC0');
+    drawLine(cum2, '#EF6C00');
+    if (crossY) {
+      const cx = toX(parseFloat(crossY)), cy = toY(crossC);
+      ctx.strokeStyle='#2E7D32'; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(padL, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, H-padB); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='#2E7D32'; ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+      ctx.font='bold 11px sans-serif'; ctx.textAlign='left';
+      ctx.fillText(`(${crossY} yr, $${fmt(crossC)})`, cx+8, cy-8);
+    }
+  }, 50);
+}
+
+buildFanInputs();
+buildPbInputs();
+</script>
+</body>
+</html>
